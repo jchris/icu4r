@@ -1,0 +1,204 @@
+This is one-stop reference  on Unicode regular expressions syntax, available in ICU.
+This text is compiled from several sources in ICU userguide and code docs.
+
+===  Regular Expression Metacharacters
+     
+     Character      Description
+     \a     Match a BELL, \u0007
+     \A     Match at the beginning of the input. Differs from ^ in that \A will not match after a new line within the input.
+     \b, outside of a [Set]         Match if the current position is a word boundary. Boundaries occur 
+     at the transitions between word (\w) and non-word (\W) characters, 
+     with combining marks ignored. For better word boundaries, see ICU Boundary Analysis .
+     \b, within a [Set]     Match a BACKSPACE, \u0008.
+     \B     Match if the current position is not a word boundary.
+     \cX    Match a control-X character.
+     \d     Match any character with the Unicode General Category of Nd (Number, Decimal Digit.)
+     \D     Match any character that is not a decimal digit.
+     \e     Match an ESCAPE, \u001B.
+     \E     Terminates a \Q ... \E quoted sequence.
+     \f     Match a FORM FEED, \u000C.
+     \G     Match if the current position is at the end of the previous match.
+     \n     Match a LINE FEED, \u000A.
+     \N{UNICODE CHARACTER NAME}     Match the named character.
+     \p{UNICODE PROPERTY NAME}      Match any character with the specified Unicode Property.
+     \P{UNICODE PROPERTY NAME}      Match any character not having the specified Unicode Property.
+     \Q     Quotes all following characters until \E.
+     \r     Match a CARRIAGE RETURN, \u000D.
+     \s     Match a white space character. White space is defined as [\t\n\f\r\p{Z}].
+     \S     Match a non-white space character.
+     \t     Match a HORIZONTAL TABULATION, \u0009.
+     \uhhhh         Match the character with the hex value hhhh.
+     \Uhhhhhhhh     Match the character with the hex value hhhhhhhh. Exactly eight hex digits must be 
+     provided, even though the largest Unicode code point is \U0010ffff.
+     \w     Match a word character. Word characters are [\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}].
+     \W     Match a non-word character.
+     \x{hhhh}       Match the character with hex value hhhh. From one to six hex digits may be supplied.
+     \xhh   Match the character with two digit hex value hh
+     \X     Match a Grapheme Cluster .
+     \Z     Match if the current position is at the end of input, but before the final line terminator, if one exists.
+     \z     Match if the current position is at the end of input.
+     \n     Back Reference. Match whatever the nth capturing group matched. n must be a number > 1 and <  total number 
+            of capture groups in the pattern. Note: Octal escapes, such as \012, are not supported in ICU regular expressions
+     [pattern]      Match any one character from the set. See UnicodeSet for a full description of what may  appear in the pattern
+     .      Match any character.
+     ^      Match at the beginning of a line.
+     $      Match at the end of a line.
+     \      Quotes the following character. Characters that must be quoted to be treated as literals are * ? + [ ( ) { } ^ $ | \ . /
+     
+===   Regular Expression Operators
+     
+     Operator       Description
+     |           Alternation. A|B matches either A or B.
+     *      Match 0 or more times. Match as many times as possible.
+     +      Match 1 or more times. Match as many times as possible.
+     ?      Match zero or one times. Prefer one.
+     {n}    Match exactly n times
+     {n,}   Match at least n times. Match as many times as possible.
+     {n,m}  Match between n and m times. Match as many times as possible, but not more than m.
+     *?     Match 0 or more times. Match as few times as possible.
+     +?     Match 1 or more times. Match as few times as possible.
+     ??     Match zero or one times. Prefer zero.
+     {n}?   Match exactly n times
+     {n,}?  Match at least n times, but no more than required for an overall pattern match
+     {n,m}?         Match between n and m times. Match as few times as possible, but not less than n.
+     *+             Match 0 or more times. Match as many times as possible when first encountered, do not retry with 
+     fewer even if overall match fails (Possessive Match)
+     ++             Match 1 or more times. Possessive match.
+     ?+     Match zero or one times. Possessive match.
+     {n}+   Match exactly n times
+     {n,}+  Match at least n times. Possessive Match.
+     {n,m}+         Match between n and m times. Possessive Match.
+     ( ... )        Capturing parentheses. Range of input that matched the parenthesized subexpression is 
+     available after the match.
+     (?: ... )      Non-capturing parentheses. Groups the included pattern, but does not provide 
+     capturing of matching text. Somewhat more efficient than capturing parentheses.
+     (?> ... )      Atomic-match parentheses. First match of the parenthesized subexpression is the only 
+     one tried; if it does not lead to an overall pattern match, back up the search for a 
+     match to a position before the "(?>"
+     (?# ... )      Free-format comment (?# comment ).
+     (?= ... )      Look-ahead assertion. True if the parenthesized pattern matches at the current input position,
+     but does not advance the input position.
+     (?! ... )      Negative look-ahead assertion. True if the parenthesized pattern does not match at the current 
+     input position. Does not advance the input position.
+     (?<= ... )     Look-behind assertion. True if the parenthesized pattern matches text preceding the current 
+     input position, with the last character of the match being the input character just before 
+     the current position. Does not alter the input position. The length of possible strings matched 
+     by the look-behind pattern must not be unbounded (no * or + operators.)
+     (?<! ... )     Negative Look-behind assertion. True if the parenthesized pattern does not 
+     match text preceding the current input position, with the last character of the 
+     match being the input character just before the current position. Does not alter 
+     the input position. The length of possible strings matched by the look-behind pattern 
+     must not be unbounded (no * or + operators.)
+     (?ismx-ismx: ... )     Flag settings. Evaluate the parenthesized expression with the specified flags enabled or -disabled.
+     (?ismx-ismx)   Flag settings. Change the flag settings. Changes apply to the portion of the pattern 
+     following the setting. For example, (?i) changes to a case insensitive match.
+     
+===   Replacement Text
+     
+The replacement text for find-and-replace operations may contain references to capture-group text from the find. References are of the form $n, where n is the number of the capture group.
+     
+     Character      Descriptions
+     $n     The text of capture group n will be substituted for $n. n must be >= 0 and not 
+     greater than the number of capture groups. A $ not followed by a digit has no special meaning, 
+     and will appear in the substitution text as itself, a $.
+     \      Treat the following character as a literal, suppressing any special meaning. Backslash escaping in 
+     substitution text is only required for '$' and '\', but may be used on any other character without bad effects.
+
+=== UnicodeSet Pattern syntax
+
+These patterns follow a syntax similar to that employed by version 8 regular expression character classes. 
+
+Here are some simple examples:
+
+    [] 	No characters
+    [a] 	The character 'a'
+    [ae] 	The characters 'a' and 'e'
+    [a-e] 	The characters 'a' through 'e' inclusive, in Unicode code point order
+    [\u4E01] 	The character U+4E01
+    [a{ab}{ac}] 	The character 'a' and the multicharacter strings "ab" and "ac"
+    [\p{Lu}] 	All characters in the general category Uppercase Letter
+
+Any character may be preceded by a backslash in order to remove any special meaning. 
+White space characters, are ignored, unless they are escaped.
+
+Property patterns specify a set of characters having a certain property as defined by the 
+Unicode standard. Both the POSIX-like "[:Lu:]" and the Perl-like syntax "\\p{Lu}" are recognized. 
+
+Patterns specify individual characters, ranges of characters, and Unicode property sets. 
+When elements are concatenated, they specify their union. To complement a set, place a '^' 
+immediately after the opening '['. Property patterns are inverted by modifying their delimiters; 
+"[:^foo]" and "\\P{foo}". In any other location, '^' has no special meaning.
+
+Ranges are indicated by placing two a '-' between two characters, as in "a-z". 
+This specifies the range of all characters from the left to the right, in Unicode order. 
+If the left character is greater than or equal to the right character it is a syntax error. 
+If a '-' occurs as the first character after the opening '[' or '[^', or if it occurs as the 
+last character before the closing ']', then it is taken as a literal. Thus "[a\-b]", "[-ab]", 
+and "[ab-]" all indicate the same set of three characters, 'a', 'b', and '-'.
+
+Sets may be intersected using the '&' operator or the asymmetric set difference may be taken using 
+the '-' operator, for example, "[[:L:]&[\\u0000-\\u0FFF]]" indicates the set of all 
+Unicode letters with values less than 4096. Operators ('&' and '|') have equal precedence 
+and bind left-to-right. Thus "[[:L:]-[a-z]-[\\u0100-\\u01FF]]" is equivalent to 
+"[[[:L:]-[a-z]]-[\\u0100-\\u01FF]]". This only really matters for difference; intersection 
+is commutative.
+
+    [a]	The set containing 'a'
+    [a-z]	The set containing 'a' through 'z' and all letters in between, in Unicode order
+    [^a-z]	The set containing all characters but 'a' through 'z', that is, U+0000 through 'a'-1 
+                and 'z'+1 through U+10FFFF
+    [[pat1][pat2]] 	The union of sets specified by pat1 and pat2
+    [[pat1]&[pat2]] 	The intersection of sets specified by pat1 and pat2
+    [[pat1]-[pat2]] 	The asymmetric difference of sets specified by pat1 and pat2
+    [:Lu:] or \p{Lu} 	The set of characters having the specified Unicode property; in this case, Unicode uppercase letters
+    [:^Lu:] or \P{Lu} 	The set of characters not having the given Unicode property
+
+Warning: you cannot add an empty string ("") to a UnicodeSet.
+
+Formal syntax
+
+    pattern      := ('[' '^'? item* ']') | property
+    item         := char | (char '-' char) | pattern-expr
+    pattern-expr := pattern | pattern-expr pattern | pattern-expr op pattern
+    op           := '&' | '-'
+    special      := '[' | ']' | '-'
+    char         := any character that is not special | ('\' any character) | ('\u' hex hex hex hex)
+    hex          := any character for which Character.digit(c, 16) returns a non-negative result
+    property     := a Unicode property set pattern
+
+    Legend:
+    a := b 	  	a may be replaced by b
+    a? 		zero or one instance of a
+    a* 		one or more instances of a
+    a | b 		either a or b
+    'a' 		the literal string between the quotes 
+
+The C/POSIX character classes are also available in UnicodeSet patterns, using patterns like [:graph:] or \p{graph}.
+
+     alpha , lower , upper ,  punct ,  digit , xdigit, alnum , space , blank ,  cntrl ,  graph , print
+    
+=== General Categories
+
+    Lu = Letter, uppercase        Mn = Mark, nonspacing            Nd = Number, decimal digit
+    Ll = Letter, lowercase        Mc = Mark, spacing combining     Nl = Number, letter
+    Lt = Letter, titlecase        Me = Mark, enclosing             No = Number, other
+    Lm = Letter, modifier
+    Lo = Letter, other
+
+    Zs = Separator, space             Cc = Other, control
+    Zl = Separator, line              Cf = Other, format
+    Zp = Separator, paragraph         Cs = Other, surrogate
+                                      Co = Other, private use
+                                      Cn = Other, not assigned (including noncharacters)
+
+    Pc = Punctuation, connector                                                         Sm = Symbol, math
+    Pd = Punctuation, dash                                                              Sc = Symbol, currency
+    Ps = Punctuation, open                                                              Sk = Symbol, modifier
+    Pe = Punctuation, close                                                             So = Symbol, other
+    Pi = Punctuation, initial quote (may behave like Ps or Pe depending on usage)
+    Pf = Punctuation, final quote (may behave like Ps or Pe depending on usage)
+    Po = Punctuation, other
+
+
+See also http://www.unicode.org/Public/UNIDATA/PropertyAliases.txt and 
+http://www.unicode.org/Public/UNIDATA/PropertyValueAliases.txt for additional info.

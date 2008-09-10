@@ -1,0 +1,131 @@
+=== Locale-sensitive Message Formatting
+
+Basic pattern rules are:
+
+     messageFormatPattern := string ( "{" messageFormatElement "}" string )*
+
+     messageFormatElement := argument { "," elementFormat }
+
+     elementFormat := "time" { "," datetimeStyle }
+                    | "date" { "," datetimeStyle }
+                    | "number" { "," numberStyle }
+                    | "spellout"
+                    | "ordinal"
+                    | "duration"
+                    | "choice" "," choiceStyle
+
+     datetimeStyle := "short"
+                    | "medium"
+                    | "long"
+                    | "full"
+                    | dateFormatPattern
+
+     numberStyle :=   "currency"
+                    | "percent"
+                    | "integer"
+                    | numberFormatPattern
+
+     choiceStyle :=   choiceFormatPattern
+
+=== numberFormatPattern
+
+    pattern    := subpattern{;subpattern}
+    subpattern := {prefix}integer{.fraction}{suffix}
+              
+    prefix     := '\\u0000'..'\\uFFFD' - specialCharacters
+    suffix     := '\\u0000'..'\\uFFFD' - specialCharacters
+    integer    := '#'* '0'* '0'
+    fraction   := '0'* '#'*
+                                
+Notation:
+     X*       0 or more instances of X
+     (X | Y)  either X or Y.
+     X..Y     any character from X up to Y, inclusive.
+     S - T    characters in S, except those in T
+
+The first subpattern is for positive numbers. The second (optional)
+subpattern is used for negative numbers. (In both cases, ',' can
+occur inside the integer portion--it is just too messy to indicate
+in BNF.)  For the second subpattern, only the PREFIX and SUFFIX are
+noted; other attributes are taken only from the first subpattern.
+
+Here are the special characters used in the parts of the
+subpattern, with notes on their usage.
+
+Symbol   Meaning
+     0      a digit, showing up a zero if it is zero
+     #      a digit, supressed if zero
+     .      placeholder for decimal separator
+     ,      placeholder for grouping separator.
+     E      separates mantissa and exponent for exponential formats.
+     ;      separates formats.
+     -      default negative prefix.
+     %      multiply by 100 and show as percentage
+     \u2030 multiply by 1000 and show as per mille
+     \u00A4 currency sign; replaced by currency symbol; if  doubled, replaced by international currency symbol.
+            If present in a pattern, the monetary decimal separator
+            is used instead of the decimal separator.
+     X      any other characters can be used in the prefix or suffix
+     '      used to quote special characters in a prefix or suffix.
+
+=== dateFormatPattern
+
+    Symbol   Meaning                 Presentation       Example
+    ------   -------                 ------------       -------
+    G        era designator          (Text)             AD
+    y        year                    (Number)           1996
+    Y        year/week of year       (Number)           1996
+    M        month in year           (Text & Number)    July & 07
+    d        day in month            (Number)           10
+    h        hour in am/pm (1~12)    (Number)           12
+    H        hour in day (0~23)      (Number)           0
+    m        minute in hour          (Number)           30
+    s        second in minute        (Number)           55
+    S        millisecond             (Number)           978
+    E        day of week             (Text)             Tuesday
+    e        day of week/local (1~7) (Number)           2
+    D        day of year             (Number)           189
+    F        day of week in month    (Number)           2 (2nd Wed in July)
+    w        week in year            (Number)           27
+    W        week in month           (Number)           2
+    a        am/pm marker            (Text)             PM
+    k        hour in day (1~24)      (Number)           24
+    K        hour in am/pm (0~11)    (Number)           0
+    z        time zone               (Text)             Pacific Standard Time
+    '        escape for text
+    ''       single quote                               '
+
+
+=== choiceFormatPattern
+In most cases, the preferred way to define a ChoiceFormat is with a pattern. Here is an example of a ChoiceFormat pattern:
+
+     0≤are no files|1≤is one file|1<are many files
+
+or equivalently,
+
+     0#are no files|1#is one file|1<are many files
+
+The pattern consists of a number or range specifiers separated by vertical bars '|' (U+007C). There is no vertical bar after the last range. Each range specifier is of the form:
+
+  Number is a floating point number that can be parsed by a default 
+  NumberFormat for the US locale. It gives the lower limit of this range. 
+  The lower limit is either inclusive or exclusive, depending on the separator. 
+  The upper limit is given by the lower limit of the next range. The Unicode infinity 
+  sign ∞ (U+221E) is recognized for positive infinity. It may be preceded by '-' (U+002D) 
+  to indicate negative infinity.
+
+  String is the format string for this range, with special characters enclosed in single 
+  quotes ('The # sign'). Single quotes themselves are indicated by two single quotes in a 
+  row ('o''clock').
+
+  Separator is one of the following single characters:
+* '≤' (U+2264) or '#' (U+0023) indicates that the lower limit given by 
+Number is inclusive. (The two characters are equivalent to ChoiceFormat.) 
+This means that the limit value Number belongs to this range. Another way of 
+saying this is that the corresponding closure is FALSE.
+
+* '<' (U+003C) indicates that the lower limit given by Number is exclusive. 
+This means that the value Number belongs to the prior range. Another way of saying 
+this is that the corresponding closure is TRUE.
+                    
+See ICU docs for more info and examples.

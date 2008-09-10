@@ -1,0 +1,156 @@
+== ICU4R - ICU Unicode bindings for Ruby
+
+ICU4R is an attempt to provide better Unicode support for Ruby,
+where it lacks for a long time.
+
+Current code is mostly rewritten  string.c from Ruby 1.8.3.
+
+ICU4R is Ruby C-extension binding for ICU library[1] 
+and provides following classes and functionality:
+
+* UString:
+    - String-like class with internal UTF16 storage;
+    - UCA rules for UString comparisons (<=>, casecmp);
+    - encoding(codepage) conversion;
+    - Unicode normalization;
+    - transliteration, also rule-based;
+
+    Bunch of locale-sensitive functions:
+    - upcase/downcase;
+    - string collation;
+    - string search;
+    - iterators over text line/word/char/sentence breaks;
+    - message formatting (number/currency/string/time);
+    - date and number parsing.
+
+* URegexp - unicode regular expressions.
+
+* UResourceBundle - access to resource bundles, including ICU locale data.
+
+* UCalendar - date manipulation and timezone info.
+
+* UConverter - codepage conversions API
+
+* UCollator - locale-sensitive string comparison
+
+== Install and usage
+
+   > ruby extconf.rb
+   > make && make check
+   > make install
+
+Now, in your scripts just require 'icu4r'.
+
+To create RDoc, run 
+   > sh tools/doc.sh
+
+== Requirements
+
+To build and use ICU4R you will need GCC and ICU v3.4 libraries[2].
+
+== Differences from Ruby String and Regexp classes
+
+=== UString vs String
+
+1. UString substring/index  methods use UTF16 codeunit indexes, not code points.
+
+2. UString supports most methods from String class. Missing methods are:
+        capitalize, capitalize!, swapcase, swapcase!
+        %, center, ljust, rjust
+        chomp, chomp!, chop, chop!
+        count, delete, delete!, squeeze, squeeze!, tr, tr!, tr_s, tr_s!
+        crypt, intern, sum, unpack
+        dump, each_byte, each_line
+        hex, oct, to_i, to_sym
+        reverse, reverse!
+        succ, succ!, next, next!, upto
+        
+3. Instead of String#% method, UString#format is provided. See FORMATTING for short reference.
+
+4. UStrings can be created via String.to_u(encoding='utf8') or global u(str,[encoding='utf8'])
+   calls. Note that +encoding+ parameter must be value of String class. 
+
+5. There's difference between character grapheme, codepoint and codeunit. See UNICODE reports for
+   gory details, but in short: locale dependent notion of character can be presented using 
+   more than one codepoint - base letter and combining (accents) (also possible more than one!), and
+   each codepoint can require more than one codeunit to store (for UTF8 codeunit size is 8bit, though
+   some codepoints require up to 4bytes). So, UString has normalization and locale dependent break
+   iterators.
+	
+6. Currently UString doesn't include Enumerable module.
+
+7. UString index/[] methods which accept URegexp, throw exception if Regexp passed.
+
+8. UString#<=>, UString#casecmp use UCA rules.
+
+=== URegexp
+
+UString uses ICU regexp library. Pattern syntax is described in [./docs/UNICODE_REGEXPS] and ICU docs.
+
+There are some differences between processing in Ruby Regexp and URegexp:
+
+1. When UString#sub, UString#gsub are called with block, special vars ($~, $&, $1, ...) aren't
+   set, as their values are processed through deep ruby core code. Instead, block receives UMatch object,
+   which is essentially immutable array of matching groups:
+        "test".u.gsub(ure("(e)(.)")) do |match| 
+           puts match[0]  # => 'es' <--> $&
+           puts match[1]  # => 'e'  <--> $1
+           puts match[2]  # => 's'  <--> $2
+        end
+
+2. In URegexp search pattern backreferences are in form \n (\1, \2, ...), 
+   in replacement string - in form $1, $2, ...
+
+   NOTE: URegexp considers char to be a digit NOT ONLY ASCII (0x0030-0x0039), but 
+   any Unicode char, which has property Decimal digit number (Nd), e.g.:
+        a = [?$, 0x1D7D9].pack("U*").u * 2
+        puts a.inspect_names
+        <U000024>DOLLAR SIGN
+        <U01D7D9>MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+        <U000024>DOLLAR SIGN
+        <U01D7D9>MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+        puts "abracadabra".u.gsub(/(b)/.U, a)
+        abbracadabbra
+    
+
+3. One can create URegexp using global Kernel#ure function, Regexp#U, Regexp#to_u, or
+   from UString using URegexp.new, e.g:
+      /pattern/.U =~ "string".u
+
+4. There are differences about Regexp and URegexp multiline matching options:
+      t = "text\ntest"
+      # ^,$ handling : URegexp multiline <-> Ruby default
+      t.u =~ ure('^\w+$', URegexp::MULTILINE)
+      => #<UMatch:0xf6f7de04 @ranges=[0..3], @cg=[\u0074\u0065\u0078\u0074]>
+      t =~ /^\w+$/
+      => 0
+      # . matches \n : URegexp DOTALL <-> /m
+      t.u =~ ure('.+test', URegexp::DOTALL)
+      => #<UMatch:0xf6fa4d88 ...
+      t.u =~ /.+test/m
+
+5. UMatch.range(idx) returns range for capturing group idx. This range is in codeunits.
+
+=== References
+
+1. ICU Official Homepage http://ibm.com/software/globalization/icu/ 
+2. ICU downloads  http://ibm.com/software/globalization/icu/downloads.jsp
+3. ICU Home Page http://icu.sf.net 
+4. Unicode Home Page http://www.unicode.org
+
+==== BUGS, DOCS, TODO
+
+The code is slow and inefficient yet, is still highly experimental, 
+so can have many security and memory leaks, bugs, inconsistent 
+documentation, incomplete test suite. Use it at your own risk.
+
+Bug reports and feature requests are welcome :)
+
+===  Copying
+
+This extension module is copyrighted free software by Nikolai Lugovoi.
+
+You can redistribute it and/or modify it under the terms of MIT License.
+
+Nikolai Lugovoi <meadow.nnick@gmail.com>
+

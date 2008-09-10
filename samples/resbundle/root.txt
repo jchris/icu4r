@@ -1,0 +1,10 @@
+root {
+   icu4r_hello { "Hello from ICU4R" }
+   icu4r_classes:array {
+	   "UString",
+	   "URegexp",
+	   "UMatch",
+	   "UResourceBundle"
+   }
+   ustring { "{0} - class to work with UTF16-encoded strings" }
+}
